@@ -1,0 +1,32 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct clubs {
+  char name[20];
+  char place[20];
+  char theme[20];
+  char opentime[5];
+  char closetime[5];
+};
+
+int main() {
+  int n;
+  printf("Введите количество клубов: ");
+  scanf("%d", &n);
+
+  struct clubs x[n];
+  // %[^\n]
+  for (int i = 0; i < n; i++) {
+    printf("Введите название клуба: \n");
+    fgets(x[i].name, 20, stdin);
+    printf("Введите адрес клуба: \n");
+    fgets(x[i].place, 20, stdin);
+    printf("Введите тему клуба: \n");
+    fgets(x[i].theme, 20, stdin);
+    printf("Введите время открытия: \n");
+    fgets(x[i].opentime, 5, stdin);
+    printf("Введите время закрытия: \n");
+    fgets(x[i].closetime, 5, stdin);
+  }
+  printf("%s\n", x[0].name);
+}
