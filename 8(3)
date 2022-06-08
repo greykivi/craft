@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include "conio.h"
+int main()
+{
+    char s[100];
+    char d[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"};
+    int i, j;
+    int n;
+    int net = 0;
+ 
+    printf("\nVvedite kolichestvo simvolov\n");
+    scanf("%d", &n);
+    
+    printf("\nVvedite posledovatelnost\n");
+    for(i = 0; i <= n; i++)
+    {
+        scanf("%c", &s[i]); 
+    }
+ 
+    for(i = 0; i <= n; i++)
+    {
+        for(j = 0; j < 52; j++)
+        {
+            if(s[i] == d[j]) 
+            {
+                net++;
+            }
+        }
+    }   
+    
+    if(net == 0)
+    {
+        printf("\n Net latinskih \n");
+    }
+    else
+    {
+        printf("\n Est latinskie \n");
+        printf("%d\n", net );
+    }
+    getch();
+    return 0;
+}
