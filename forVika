@@ -1,0 +1,155 @@
+#include <windows.h>
+#include <commdlg.h> // для диалогового окна выбора файла
+
+#include <wingdi.h> // для функций загрузки изображения
+
+
+// Объявление глобальных переменных
+
+HWND hWnd; // дескриптор окна
+
+HBITMAP hBitmap; // дескриптор изображения
+
+LPCWSTR szAppName = L"ImageViewer"; // строка имени приложения
+
+
+// Прототипы функций
+
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void LoadImageFile();
+
+// Функция WinMain
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+    // Создание структуры с параметрами окна
+
+    WNDCLASS wndclass = {0};
+    wndclass.style = CS_HREDRAW | CS_VREDRAW;
+    wndclass.lpfnWndProc = WndProc;
+    wndclass.hInstance = hInstance;
+    wndclass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wndclass.lpszClassName = szAppName;
+
+    // Регистрация класса окна
+
+    if (!RegisterClass(&wndclass))
+    {
+        MessageBox(NULL, L"Не удалось зарегистрировать класс окна", szAppName, MB_ICONERROR);
+        return 0;
+    }
+
+    // Создание окна
+
+    hWnd = CreateWindow(szAppName, L"ImageViewer", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+
+    // Отображение окна
+
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
+
+    // Основной цикл обработки сообщений
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return msg.wParam;
+}
+
+// Обработчик сообщений окна
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_CREATE:
+            // Создание кнопки "Открыть"
+            CreateWindow(L"BUTTON", L"Открыть", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 10, 75, 25, hWnd, (HMENU)1, NULL, NULL);
+            break;
+
+        case WM_COMMAND:
+            switch (wParam)
+            {
+                case 1: // Нажатие на кнопку "Открыть"
+                    LoadImageFile(); // Вызов функции загрузки изображения
+
+                    break;
+            }
+            break;
+
+        case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hWnd, &ps);
+
+            if (hBitmap != NULL)
+            {
+                // Рисование изображения на контексте устройства окна
+
+                HDC hMemDC = CreateCompatibleDC(hdc);
+                SelectObject(hMemDC, hBitmap);
+                BITMAP bitmap;
+                GetObject(hBitmap, sizeof(bitmap), &bitmap);
+                int x = (GetSystemMetrics(SM_CXSCREEN) - bitmap.bmWidth) / 2;
+                int y = (GetSystemMetrics(SM_CYSCREEN) - bitmap.bmHeight) / 2;
+                BitBlt(hdc, x, y, bitmap.bmWidth, bitmap.bmHeight, hMemDC, 0, 0, SRCCOPY);
+                DeleteDC(hMemDC);
+            }
+
+            EndPaint(hWnd, &ps);
+            break;
+        }
+
+        case WM_DESTROY:
+            // Уничтожение изображения
+
+            if (hBitmap != NULL)
+            {
+                DeleteObject(hBitmap);
+            }
+
+            // Завершение работы приложения
+
+            PostQuitMessage(0);
+            break;
+
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+
+    return 0;
+}
+
+// Функция загрузки изображения из файла
+
+void LoadImageFile()
+{
+    // Создание структуры с параметрами диалогового окна выбора файла
+
+    OPENFILENAME ofn = {0};
+    WCHAR szFileName[MAX_PATH] = {0};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hWnd;
+    ofn.lpstrFilter = L"Image files (*.bmp, *.gif, *.jpg, *.png)\0*.bmp;*.gif;*.jpg;*.png\0All files (*.*)\0*.*\0";
+    ofn.lpstrFile = szFileName;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    // Вызов диалогового окна выбора файла
+
+    if (GetOpenFileName(&ofn))
+    {
+        // Загрузка изображения
+
+        hBitmap = (HBITMAP)LoadImage(NULL, szFileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+        // Обновление окна
+
+        InvalidateRect(hWnd, NULL, TRUE);
+        UpdateWindow(hWnd);
+    }
+}
